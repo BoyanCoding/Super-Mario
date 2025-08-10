@@ -87,7 +87,7 @@ If you want to extend or modify the game using AI assistance:
 1. **Clone the agents repository:**
 ```bash
 # In the Super-Mario directory
-git clone https://github.com/anthropics/claude-agents .claude/agents
+git clone https://github.com/BoyanCoding/agents .claude/agents
 ```
 
 2. **Setup Claude Code:**
