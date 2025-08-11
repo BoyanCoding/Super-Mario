@@ -1,30 +1,92 @@
-import Game from '@/components/Game';
+'use client';
+
+import SuperMarioGame from '@/components/SuperMarioGame';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Super Mario Platformer
-          </h1>
-          <p className="text-lg text-gray-600">
-            A Next.js TypeScript implementation of the classic platformer
-          </p>
-        </header>
+    <>
+      <SuperMarioGame />
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
-        <main className="flex justify-center">
-          <Game 
-            width={800}
-            height={480}
-            className="shadow-lg rounded-lg overflow-hidden"
-          />
-        </main>
+        body {
+          margin: 0;
+          padding: 0;
+          background: #000;
+          font-family: 'Press Start 2P', monospace;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 100vh;
+          image-rendering: pixelated;
+          -webkit-font-smoothing: none;
+          font-smoothing: none;
+        }
         
-        <footer className="mt-8 text-center text-sm text-gray-500">
-          <p>Built with Next.js, TypeScript, and HTML5 Canvas</p>
-        </footer>
+        canvas {
+          border: 4px solid #333;
+          background: #5C94FC;
+          box-shadow: 0 0 20px rgba(0,0,0,0.8);
+          image-rendering: pixelated;
+        }
+        
+        .game-container {
+          position: relative;
+          display: inline-block;
+        }
+        
+        .hud {
+          position: absolute;
+          top: 10px;
+          left: 10px;
+          color: white;
+          font-size: 12px;
+          text-shadow: 2px 2px 0px #000;
+          z-index: 10;
+          line-height: 1.4;
+        }
+        
+        .controls {
+          margin-top: 20px;
+          text-align: center;
+          color: #ccc;
+          font-size: 10px;
+        }
+        
+        .title {
+          color: #FFD700;
+          font-size: 16px;
+          text-shadow: 3px 3px 0px #000;
+          margin-bottom: 20px;
+          text-align: center;
+        }
+        
+        .particle {
+          position: absolute;
+          pointer-events: none;
+          font-size: 12px;
+          font-weight: bold;
+          z-index: 20;
+        }
+      `}</style>
+      
+      <div className="title">SUPER MARIO BROS</div>
+      <div className="game-container">
+        <canvas id="gameCanvas" width="800" height="480"></canvas>
+        <div className="hud" id="gameHUD">
+          <div>MARIO</div>
+          <div id="scoreDisplay">000000</div>
+          <div style={{marginTop: '10px'}}>WORLD</div>
+          <div>1-1</div>
+          <div style={{marginTop: '10px'}}>TIME</div>
+          <div id="timeDisplay">400</div>
+          <div style={{marginTop: '10px'}}>x<span id="livesDisplay">3</span></div>
+        </div>
       </div>
-    </div>
+      <div className="controls">
+        <p>ARROW KEYS = MOVE | SPACEBAR = JUMP | F = FIREBALL (Fire Mario) | R = RESTART</p>
+      </div>
+    </>
   );
 }
