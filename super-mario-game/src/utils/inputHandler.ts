@@ -13,18 +13,12 @@ export class InputHandler {
 
   private keyMap: Record<string, keyof InputState> = {
     'ArrowLeft': 'left',
-    'KeyA': 'left',
     'ArrowRight': 'right',
-    'KeyD': 'right',
     'ArrowUp': 'up',
-    'KeyW': 'up',
     'ArrowDown': 'down',
-    'KeyS': 'down',
     'Space': 'jump',
-    'KeyX': 'jump',
     'ShiftLeft': 'run',
     'ShiftRight': 'run',
-    'KeyZ': 'run',
     'Escape': 'pause',
     'KeyP': 'pause',
   };
@@ -55,6 +49,7 @@ export class InputHandler {
     const action = this.keyMap[event.code];
     if (action && !this.inputState[action]) {
       this.inputState[action] = true;
+      console.log(`Key pressed: ${event.code} -> ${action}`); // Debug log
       this.notifyListeners();
     }
   };
@@ -63,6 +58,7 @@ export class InputHandler {
     const action = this.keyMap[event.code];
     if (action && this.inputState[action]) {
       this.inputState[action] = false;
+      console.log(`Key released: ${event.code} -> ${action}`); // Debug log
       this.notifyListeners();
     }
   };
@@ -88,7 +84,7 @@ export class InputHandler {
    */
   public subscribe(callback: (inputState: InputState) => void): () => void {
     this.listeners.push(callback);
-    
+
     // Return unsubscribe function
     return () => {
       const index = this.listeners.indexOf(callback);
