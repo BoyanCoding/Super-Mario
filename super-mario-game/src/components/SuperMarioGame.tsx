@@ -25,7 +25,7 @@ export default function SuperMarioGame() {
     const GRAVITY = 0.8;
     const GROUND_Y = 400;
     const MAX_JUMP_FORCE = -18;
-    const MIN_JUMP_FORCE = -8;
+    const MIN_JUMP_FORCE = -10;
     const MOVE_SPEED = 6;
     const MAX_SPEED = 8;
     const ACCELERATION = 0.5;
@@ -48,7 +48,7 @@ export default function SuperMarioGame() {
         isMoving: false,
         isJumping: false,
         jumpHoldTime: 0,
-        maxJumpHoldTime: 15,
+        maxJumpHoldTime: 12,
         coyoteTime: 0,
         invulnerable: false,
         invulnerabilityTime: 0,
@@ -278,13 +278,30 @@ export default function SuperMarioGame() {
             player.vx *= 0.8; // Friction
         }
         
-        if (keys['Space'] && (player.onGround || player.coyoteTime > 0)) {
+        // Jump initiation - only start jump if not already jumping
+        if (keysPressed['Space'] && (player.onGround || player.coyoteTime > 0) && !player.isJumping) {
             player.vy = MIN_JUMP_FORCE;
             player.onGround = false;
             player.isJumping = true;
             player.jumpHoldTime = 0;
             player.coyoteTime = 0;
             playSound('jump');
+        }
+        
+        // Variable jump height - continue adding upward force while space is held
+        if (player.isJumping && keys['Space'] && player.vy < 0 && player.jumpHoldTime < player.maxJumpHoldTime) {
+            // Add additional upward force based on how long space is held
+            const jumpBoost = (MAX_JUMP_FORCE - MIN_JUMP_FORCE) * (player.jumpHoldTime / player.maxJumpHoldTime);
+            player.vy += jumpBoost * 0.15; // Apply boost gradually
+            player.jumpHoldTime++;
+        }
+        
+        // If space is released early or max hold time reached, end variable jump
+        if (!keys['Space'] || player.jumpHoldTime >= player.maxJumpHoldTime || player.vy >= 0) {
+            if (player.isJumping && player.vy < 0 && !keys['Space']) {
+                // Cut jump short by reducing upward velocity when space is released
+                player.vy *= 0.5;
+            }
         }
         
         // Update player animation
@@ -337,13 +354,8 @@ export default function SuperMarioGame() {
             fireballs.length = 0;
         }
         
-        // Variable jump height - reduce gravity while holding space
-        if (player.isJumping && keys['Space'] && player.vy < 0 && player.jumpHoldTime < player.maxJumpHoldTime) {
-            player.jumpHoldTime++;
-            player.vy *= 0.98; // Reduce upward velocity decay
-        }
-        
-        if (!keys['Space'] || player.vy >= 0) {
+        // Reset jumping state when landing or falling
+        if (player.vy >= 0) {
             player.isJumping = false;
         }
         
@@ -407,7 +419,8 @@ export default function SuperMarioGame() {
                 if (player.vy > 0 && player.y < enemy.y) {
                     // Jump on enemy
                     enemy.alive = false;
-                    player.vy = MIN_JUMP_FORCE * 0.5;
+                    player.vy = MIN_JUMP_FORCE * 0.6; // More responsive bounce
+                    player.isJumping = false; // Allow for immediate new jump
                     game.score += 100;
                     createParticle(enemy.x + enemy.width/2, enemy.y, '100', '#FFD700');
                     playSound('stomp');
