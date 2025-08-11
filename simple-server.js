@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const port = 8080;
+const port = 3000;
 const gameFile = path.join(__dirname, 'super-mario-game', 'public', 'simple-mario.html');
 
 const server = http.createServer((req, res) => {
@@ -24,5 +24,5 @@ const server = http.createServer((req, res) => {
 
 server.listen(port, () => {
   console.log(`Super Mario game server running at http://localhost:${port}`);
-  console.log('Open http://localhost:8080 in your browser to play!');
+  console.log('Open http://localhost:3000 in your browser to play!');
 });
