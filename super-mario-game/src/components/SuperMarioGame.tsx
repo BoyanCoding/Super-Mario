@@ -127,18 +127,18 @@ export default function SuperMarioGame() {
         ]
     };
     
-    // Enhanced enemies system
+    // Enhanced enemies system with proper physics
     const enemies = [
-        { x: 320, y: GROUND_Y, width: 32, height: 32, vx: -1, type: 'goomba', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0 },
-        { x: 520, y: GROUND_Y, width: 32, height: 32, vx: 1, type: 'goomba', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0 },
-        { x: 720, y: GROUND_Y, width: 32, height: 38, vx: -1.5, type: 'koopa', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0, inShell: false, shellTimer: 0 },
-        { x: 980, y: GROUND_Y, width: 32, height: 32, vx: -1, type: 'goomba', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0 },
-        { x: 1150, y: GROUND_Y, width: 32, height: 38, vx: 1.2, type: 'koopa', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0, inShell: false, shellTimer: 0 },
-        { x: 1450, y: GROUND_Y, width: 32, height: 32, vx: -1, type: 'goomba', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0 },
-        { x: 1750, y: GROUND_Y, width: 32, height: 32, vx: 1, type: 'goomba', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0 },
-        { x: 1950, y: GROUND_Y, width: 32, height: 38, vx: -1, type: 'koopa', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0, inShell: false, shellTimer: 0 },
-        { x: 2150, y: GROUND_Y, width: 32, height: 32, vx: -1.5, type: 'goomba', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0 },
-        { x: 2450, y: GROUND_Y, width: 32, height: 38, vx: 1, type: 'koopa', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0, inShell: false, shellTimer: 0 }
+        { x: 320, y: GROUND_Y, width: 32, height: 32, vx: -1, vy: 0, onGround: false, type: 'goomba', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0 },
+        { x: 520, y: GROUND_Y, width: 32, height: 32, vx: 1, vy: 0, onGround: false, type: 'goomba', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0 },
+        { x: 720, y: GROUND_Y, width: 32, height: 38, vx: -1.5, vy: 0, onGround: false, type: 'koopa', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0, inShell: false, shellTimer: 0 },
+        { x: 980, y: GROUND_Y, width: 32, height: 32, vx: -1, vy: 0, onGround: false, type: 'goomba', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0 },
+        { x: 1150, y: GROUND_Y, width: 32, height: 38, vx: 1.2, vy: 0, onGround: false, type: 'koopa', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0, inShell: false, shellTimer: 0 },
+        { x: 1450, y: GROUND_Y, width: 32, height: 32, vx: -1, vy: 0, onGround: false, type: 'goomba', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0 },
+        { x: 1750, y: GROUND_Y, width: 32, height: 32, vx: 1, vy: 0, onGround: false, type: 'goomba', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0 },
+        { x: 1950, y: GROUND_Y, width: 32, height: 38, vx: -1, vy: 0, onGround: false, type: 'koopa', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0, inShell: false, shellTimer: 0 },
+        { x: 2150, y: GROUND_Y, width: 32, height: 32, vx: -1.5, vy: 0, onGround: false, type: 'goomba', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0 },
+        { x: 2450, y: GROUND_Y, width: 32, height: 38, vx: 1, vy: 0, onGround: false, type: 'koopa', animFrame: 0, animTimer: 0, alive: true, deathTimer: 0, inShell: false, shellTimer: 0 }
     ];
     
     // Static world coins
@@ -341,6 +341,8 @@ export default function SuperMarioGame() {
             enemies.forEach(enemy => {
                 enemy.alive = true;
                 enemy.deathTimer = 0;
+                enemy.vy = 0;
+                enemy.onGround = false;
                 if (enemy.type === 'koopa') {
                     enemy.inShell = false;
                     enemy.shellTimer = 0;
@@ -354,10 +356,7 @@ export default function SuperMarioGame() {
             fireballs.length = 0;
         }
         
-        // Reset jumping state when landing or falling
-        if (player.vy >= 0) {
-            player.isJumping = false;
-        }
+        // Don't reset jumping state here - let onGround detection handle it
         
         // Apply physics
         player.vy += GRAVITY;
@@ -386,32 +385,73 @@ export default function SuperMarioGame() {
             player.coyoteTime--;
         }
         
-        // Enemy collision and movement
+        // Enhanced enemy physics and movement
         enemies.forEach(enemy => {
             if (!enemy.alive) return;
             
+            // Apply gravity to enemy
+            enemy.vy += GRAVITY;
+            
+            // Update enemy position
             enemy.x += enemy.vx;
+            enemy.y += enemy.vy;
+            
+            // Enemy-platform collision detection
+            enemy.onGround = false;
+            let shouldReverseDirection = false;
+            
+            // Check collision with all platforms
+            platforms.forEach(platform => {
+                if (checkCollision(enemy, platform)) {
+                    // Landing on top of platform
+                    if (enemy.vy > 0 && enemy.y < platform.y) {
+                        enemy.y = platform.y - enemy.height;
+                        enemy.vy = 0;
+                        enemy.onGround = true;
+                    }
+                    // Side collision with walls/pipes - reverse direction
+                    else if (enemy.vx > 0 && enemy.x < platform.x) {
+                        enemy.x = platform.x - enemy.width;
+                        shouldReverseDirection = true;
+                    }
+                    else if (enemy.vx < 0 && enemy.x + enemy.width > platform.x + platform.width) {
+                        enemy.x = platform.x + platform.width;
+                        shouldReverseDirection = true;
+                    }
+                }
+            });
+            
+            // Edge detection - check if enemy is about to fall off platform
+            if (enemy.onGround) {
+                let willFallOff = true;
+                const futureX = enemy.x + enemy.vx * 10; // Look ahead
+                const futureBottomY = enemy.y + enemy.height;
+                
+                platforms.forEach(platform => {
+                    // Check if there's ground ahead in the direction enemy is moving
+                    if (futureX + enemy.width > platform.x && 
+                        futureX < platform.x + platform.width &&
+                        futureBottomY >= platform.y - 5 &&
+                        futureBottomY <= platform.y + platform.height + 5) {
+                        willFallOff = false;
+                    }
+                });
+                
+                if (willFallOff) {
+                    shouldReverseDirection = true;
+                }
+            }
+            
+            // Reverse direction if needed
+            if (shouldReverseDirection || enemy.x <= 0 || enemy.x >= 3200 - enemy.width) {
+                enemy.vx *= -1;
+            }
             
             // Update enemy animation
             enemy.animTimer++;
             if (enemy.animTimer > 20) {
                 enemy.animFrame = (enemy.animFrame + 1) % 2;
                 enemy.animTimer = 0;
-            }
-            
-            // Reverse direction at platform edges
-            let onPlatform = false;
-            platforms.forEach(platform => {
-                if (enemy.x + enemy.width > platform.x && 
-                    enemy.x < platform.x + platform.width &&
-                    enemy.y + enemy.height >= platform.y - 5 &&
-                    enemy.y + enemy.height <= platform.y + 5) {
-                    onPlatform = true;
-                }
-            });
-            
-            if (!onPlatform || enemy.x <= 0 || enemy.x >= 1600 - enemy.width) {
-                enemy.vx *= -1;
             }
             
             // Player-enemy collision
@@ -430,15 +470,47 @@ export default function SuperMarioGame() {
                         player.size = 'small';
                         player.height = 32;
                     } else {
-                        // Game over
+                        // Take damage - lose a life
                         game.lives--;
                         if (game.lives <= 0) {
                             alert('Game Over! Press R to restart');
+                            // Complete game reset (same as timer game over)
                             game.lives = 3;
                             game.score = 0;
+                            game.time = 400;
+                            game.camera.x = 0;
+                            game.particles = [];
+                            
+                            // Reset player
+                            player.x = 100;
+                            player.y = GROUND_Y;
+                            player.vx = 0;
+                            player.vy = 0;
+                            player.size = 'small';
+                            player.height = 32;
+                            player.facing = 1;
+                            player.onGround = false;
+                            player.isJumping = false;
+                            
+                            // Reset coins and enemies
+                            coins.forEach(coin => coin.collected = false);
+                            enemies.forEach(enemy => {
+                                enemy.alive = true;
+                                if (enemy.type === 'koopa') {
+                                    enemy.inShell = false;
+                                    enemy.height = 38;
+                                }
+                            });
+                            platforms.forEach((platform: any) => {
+                                if (platform.type === 'question') platform.hit = false;
+                            });
+                        } else {
+                            // Still have lives - just reset player position
+                            player.x = 100;
+                            player.y = GROUND_Y;
+                            player.vx = 0;
+                            player.vy = 0;
                         }
-                        player.x = 100;
-                        player.y = GROUND_Y;
                     }
                 }
             }
@@ -469,18 +541,50 @@ export default function SuperMarioGame() {
         // Update camera
         game.camera.x = Math.max(0, Math.min(player.x - 400, 1600 - canvas.width));
         
-        // Update game timer
-        game.time -= 0.02;
+        // Update game timer (approximately 1 second per real second)
+        game.time -= 1/60; // 60fps = 1 second per 60 frames
         if (game.time <= 0) {
             game.lives--;
             game.time = 400;
             if (game.lives <= 0) {
                 alert('Time Up! Game Over! Press R to restart');
+                // Complete game reset
                 game.lives = 3;
                 game.score = 0;
+                game.time = 400;
+                game.camera.x = 0;
+                game.particles = [];
+                
+                // Reset player
+                player.x = 100;
+                player.y = GROUND_Y;
+                player.vx = 0;
+                player.vy = 0;
+                player.size = 'small';
+                player.height = 32;
+                player.facing = 1;
+                player.onGround = false;
+                player.isJumping = false;
+                
+                // Reset coins and enemies
+                coins.forEach(coin => coin.collected = false);
+                enemies.forEach(enemy => {
+                    enemy.alive = true;
+                    if (enemy.type === 'koopa') {
+                        enemy.inShell = false;
+                        enemy.height = 38;
+                    }
+                });
+                platforms.forEach((platform: any) => {
+                    if (platform.type === 'question') platform.hit = false;
+                });
+            } else {
+                // Still have lives - just reset player position
+                player.x = 100;
+                player.y = GROUND_Y;
+                player.vx = 0;
+                player.vy = 0;
             }
-            player.x = 100;
-            player.y = GROUND_Y;
         }
     }
     
